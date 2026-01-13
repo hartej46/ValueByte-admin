@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Create simplified model of our Store
+model Store {
+  id         String       @id @default(uuid())
+  name       String
+  userId     String
+  billboards Billboard[]  @relation("StoreToBillboard")
+  categories Category[]   @relation("StoreToCategory")
+  colors     Color[]      @relation("StoreToColor")
+  orders     Order[]      @relation("StoreToOrder")
+  products   Product[]    @relation("StoreToProduct")
+  sizes      Size[]       @relation("StoreToSize")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model Billboard {
+  id          String    @id @default(uuid())
+  storeId     String    // relation scalar field (used in the `@relation` attribute)
+  store       Store     @relation("StoreToBillboard", fields: [storeId], references: [id])
+  label       String
+  imageUrl    String
+  categories  Category[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Manually add index on relation scalar field
+  @@index([storeId])
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  storeId     String    // relation scalar field (used in the `@relation` attribute)
+  store       Store     @relation("StoreToCategory", fields: [storeId], references: [id])
+  billboardId String
+  billboard   Billboard @relation(fields: [billboardId], references: [id])
+  products    Product[] @relation("CategoryToProduct")
+  name        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Manually add index on relation scalar field
+  @@index([storeId])
+  @@index([billboardId])
+}
+
+model Size {
+  id          String    @id @default(uuid())
+  storeId     String    // relation scalar field (used in the `@relation` attribute)
+  store       Store     @relation("StoreToSize", fields: [storeId], references: [id])
+  name        String
+  value       String
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Manually add index on relation scalar field
+  @@index([storeId])
+}
+
+model Color {
+  id          String    @id @default(uuid())
+  storeId     String    // relation scalar field (used in the `@relation` attribute)
+  store       Store     @relation("StoreToColor", fields: [storeId], references: [id])
+  name        String
+  value       String
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Manually add index on relation scalar field
+  @@index([storeId])
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  storeId     String    // relation scalar field (used in the `@relation` attribute)
+  store       Store     @relation("StoreToProduct", fields: [storeId], references: [id])
+  categoryId  String
+  category    Category  @relation("CategoryToProduct", fields: [categoryId], references: [id])
+  name        String
+  price       Decimal
+  isFeatured  Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  images      Image[]
+  orderItems  OrderItem[]
+  // Filter relations
+  sizeId      String
+  size        Size      @relation(fields: [sizeId], references: [id])
+  colorId     String
+  color       Color     @relation(fields: [colorId], references: [id])
+  // Time 
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Manually add index on relation scalar fields
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([sizeId])
+  @@index([colorId])
+}
+
+model Image {
+  id        String @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Manually add index on relation scalar fields
+  @@index([productId])
+}
+
+model Customer {
+  id        String    @id @default(uuid())
+  clerkId   String    @unique // Clerk user ID
+  fullName   String    @default("")
+  email      String    @default("")
+  mobile     String    @default("")
+  addresses  CustomerAddress[]
+  orders     Order[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([clerkId])
+}
+
+model CustomerAddress {
+  id          String    @id @default(uuid())
+  customerId   String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  fullName     String    @default("")
+  mobile       String    @default("")
+  houseFlat    String    @default("")
+  locality     String    @default("")
+  areaStreet   String    @default("")
+  landmark     String?   // Optional
+  city         String    @default("")
+  isDefault    Boolean   @default(false)
+  orders       Order[]   // Orders that used this address
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([customerId])
+}
+
+model Order {
+  id            String    @id @default(uuid())
+  storeId       String
+  store         Store @relation("StoreToOrder", fields: [storeId], references: [id])
+  customerId    String?
+  customer      Customer?  @relation(fields: [customerId], references: [id])
+  customerAddressId String?
+  customerAddress CustomerAddress? @relation(fields: [customerAddressId], references: [id])
+  orderItems    OrderItem[]
+  isPaid        Boolean
+  
+  // Keep these for backward compatibility during migration
+  fullName      String    @default("")
+  email         String    @default("")
+  mobile        String    @default("")
+  houseFlat     String    @default("")
+  locality      String    @default("")
+  areaStreet    String    @default("")
+  landmark      String?   // Optional
+  city          String    @default("")
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Manually add index on relation scalar fields
+  @@index([storeId])
+  @@index([customerId])
+  @@index([customerAddressId])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Manually add index on relation scalar fields
+  @@index([orderId])
+  @@index([productId])
+}
