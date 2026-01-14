@@ -1,7 +1,5 @@
-// Global Imports
 import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
-import { requestToBodyStream } from "next/dist/server/body-streams";
 import { NextResponse } from "next/server";
 
 export async function POST(
