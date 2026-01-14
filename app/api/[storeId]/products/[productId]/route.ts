@@ -64,12 +64,17 @@ export async function PATCH(
       colorId,
       images,
       isFeatured,
-      isArchived
+      isArchived,
+      description
     } = body;
 
     // Check every required field
     if (!name) {
       return new NextResponse("Name is required", { status: 400 });
+    }
+
+    if (!description) {
+      return new NextResponse("Description is required", { status: 400 });
     }
 
     if (!price) {
@@ -118,6 +123,7 @@ export async function PATCH(
         },
         isFeatured,
         isArchived,
+        description,
       }
     });
 

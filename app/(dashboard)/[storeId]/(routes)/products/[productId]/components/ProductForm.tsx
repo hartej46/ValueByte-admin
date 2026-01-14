@@ -43,6 +43,7 @@ const formSchema = z.object({
   price: z.coerce.number().min(1),
   categoryId: z.string().min(1),
   colorId: z.string().min(1),
+  description: z.string().min(1),
   isFeatured: z.boolean().default(false).optional(),
   isArchived: z.boolean().default(false).optional(),
 });
@@ -93,6 +94,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       price: 0,
       categoryId: '',
       colorId: '',
+      description: '',
       isFeatured: false,
       isArchived: false,
     }
@@ -203,6 +205,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input disabled={loading} placeholder="Product name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input disabled={loading} placeholder="Product description" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
