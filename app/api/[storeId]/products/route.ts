@@ -21,39 +21,35 @@ export async function POST(
     const body = await req.json();
 
     // Destructure fields out of body
-    const { 
-      name, 
+    const {
+      name,
       price,
       categoryId,
       colorId,
-      sizeId,
       images,
       isFeatured,
       isArchived
-     } = body;
+    } = body;
 
     // Check every required field
-    if (!name){
+    if (!name) {
       return new NextResponse("Name is required", { status: 400 });
     }
 
-    if (!price){
+    if (!price) {
       return new NextResponse("Price is required", { status: 400 });
     }
 
-    if (!categoryId){
+    if (!categoryId) {
       return new NextResponse("Category ID is required", { status: 400 });
     }
 
-    if (!colorId){
+    if (!colorId) {
       return new NextResponse("Color ID is required", { status: 400 });
     }
 
-    if (!sizeId){
-      return new NextResponse("Size ID is required", { status: 400 });
-    }
 
-    if (!images || !images.length){
+    if (!images || !images.length) {
       return new NextResponse("Images are required", { status: 400 });
     }
 
@@ -85,12 +81,11 @@ export async function POST(
         isArchived,
         categoryId,
         colorId,
-        sizeId,
         storeId: params.storeId,
         images: {
           createMany: {
             data: [
-              ...images.map((image: { url: string }) => image )
+              ...images.map((image: { url: string }) => image)
             ]
           }
         }
@@ -99,7 +94,7 @@ export async function POST(
 
     // Send back response with the product
     return NextResponse.json(product);
-  } catch (error){
+  } catch (error) {
     console.log('[PRODUCTS_POST]', error);
     return new NextResponse("Internal error", { status: 500 });
   }
@@ -116,7 +111,6 @@ export async function GET(
     // Extract parameters from query string to be used to filter products by
     const categoryId = searchParams.get("categoryId") || undefined;
     const colorId = searchParams.get("colorId") || undefined;
-    const sizeId = searchParams.get("sizeId") || undefined;
     const isFeatured = searchParams.get("isFeatured");
 
     // Check if storeId exists
@@ -131,7 +125,6 @@ export async function GET(
         storeId: params.storeId,
         categoryId,
         colorId,
-        sizeId,
         isFeatured: isFeatured ? true : undefined,
         isArchived: false
       },
@@ -139,7 +132,6 @@ export async function GET(
         images: true,
         category: true,
         color: true,
-        size: true,
       },
       orderBy: {
         createdAt: `desc`
@@ -148,7 +140,7 @@ export async function GET(
 
     // Send back response with all products
     return NextResponse.json(products);
-  } catch (error){
+  } catch (error) {
     console.log('[PRODUCTS_GET]', error);
     return new NextResponse("Internal error", { status: 500 });
   }

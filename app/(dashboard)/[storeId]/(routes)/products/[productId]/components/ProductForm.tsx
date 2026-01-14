@@ -4,7 +4,7 @@
 import * as z from 'zod';
 import axios from 'axios';
 import React, { useState } from 'react';
-import { Category, Color, Image, Product, Size } from '@prisma/client';
+import { Category, Color, Image, Product } from '@prisma/client';
 import { toast } from 'react-hot-toast';
 import { Trash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -43,7 +43,6 @@ const formSchema = z.object({
   price: z.coerce.number().min(1),
   categoryId: z.string().min(1),
   colorId: z.string().min(1),
-  sizeId: z.string().min(1),
   isFeatured: z.boolean().default(false).optional(),
   isArchived: z.boolean().default(false).optional(),
 });
@@ -51,21 +50,18 @@ const formSchema = z.object({
 // extract the inferred type
 type ProductFormValues = z.infer<typeof formSchema>;
 
-// Define type and shape of props
 interface ProductFormProps {
   initialData: Product & {
     images: Image[]
   } | null;
   categories: Category[];
   colors: Color[];
-  sizes: Size[];
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
   initialData,
   categories,
   colors,
-  sizes
 }) => {
   // Create router object to perform client-side navigation
   const router = useRouter();
@@ -97,7 +93,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       price: 0,
       categoryId: '',
       colorId: '',
-      sizeId: '',
       isFeatured: false,
       isArchived: false,
     }
@@ -185,7 +180,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 <FormLabel>Images</FormLabel>
                 <FormControl>
                   <ImageUpload
-                    value={field.value.map((image) => image.url )}
+                    value={field.value.map((image) => image.url)}
                     disabled={loading}
                     onChange={
                       (url) => field.onChange([...field.value, { url }])
@@ -232,17 +227,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category ID</FormLabel>
-                  <Select 
-                    disabled={loading} 
-                    onValueChange={field.onChange} 
+                  <Select
+                    disabled={loading}
+                    onValueChange={field.onChange}
                     value={field.value}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
-                        defaultValue={field.value}
-                        placeholder="Select a category"
+                          defaultValue={field.value}
+                          placeholder="Select a category"
                         />
                       </SelectTrigger>
                     </FormControl>
@@ -263,56 +258,21 @@ const ProductForm: React.FC<ProductFormProps> = ({
             />
             <FormField
               control={form.control}
-              name="sizeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Size ID</FormLabel>
-                  <Select 
-                    disabled={loading} 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                        defaultValue={field.value}
-                        placeholder="Select a size"
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {sizes.map((size) => (
-                        <SelectItem
-                          key={size.id}
-                          value={size.id}
-                        >
-                          {size.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="colorId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Color ID</FormLabel>
-                  <Select 
-                    disabled={loading} 
-                    onValueChange={field.onChange} 
+                  <Select
+                    disabled={loading}
+                    onValueChange={field.onChange}
                     value={field.value}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
-                        defaultValue={field.value}
-                        placeholder="Select a color"
+                          defaultValue={field.value}
+                          placeholder="Select a color"
                         />
                       </SelectTrigger>
                     </FormControl>
@@ -337,7 +297,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl >
-                    <Checkbox 
+                    <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -359,7 +319,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl >
-                    <Checkbox 
+                    <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />

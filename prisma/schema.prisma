@@ -20,7 +20,6 @@ model Store {
   colors     Color[]      @relation("StoreToColor")
   orders     Order[]      @relation("StoreToOrder")
   products   Product[]    @relation("StoreToProduct")
-  sizes      Size[]       @relation("StoreToSize")
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 }
@@ -55,19 +54,6 @@ model Category {
   @@index([billboardId])
 }
 
-model Size {
-  id          String    @id @default(uuid())
-  storeId     String    // relation scalar field (used in the `@relation` attribute)
-  store       Store     @relation("StoreToSize", fields: [storeId], references: [id])
-  name        String
-  value       String
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // Manually add index on relation scalar field
-  @@index([storeId])
-}
 
 model Color {
   id          String    @id @default(uuid())
@@ -96,8 +82,6 @@ model Product {
   images      Image[]
   orderItems  OrderItem[]
   // Filter relations
-  sizeId      String
-  size        Size      @relation(fields: [sizeId], references: [id])
   colorId     String
   color       Color     @relation(fields: [colorId], references: [id])
   // Time 
@@ -107,7 +91,6 @@ model Product {
   // Manually add index on relation scalar fields
   @@index([storeId])
   @@index([categoryId])
-  @@index([sizeId])
   @@index([colorId])
 }
 

@@ -2,13 +2,13 @@ import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
-export async function GET (
+export async function GET(
   req: Request,
-  { params }: { params: { productId: string }}
-){
+  { params }: { params: { productId: string } }
+) {
   try {
     // Check parameters
-    if (!params.productId){
+    if (!params.productId) {
       return new NextResponse("Product ID is required", { status: 400 });
     }
 
@@ -21,7 +21,6 @@ export async function GET (
         images: true,
         category: true,
         color: true,
-        size: true,
       }
     });
 
@@ -32,23 +31,23 @@ export async function GET (
   }
 };
 
-export async function PATCH (
+export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string, productId: string }}
-){
+  { params }: { params: { storeId: string, productId: string } }
+) {
   try {
     // Check parameters
-    if (!params.storeId){
+    if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 });
     }
 
-    if (!params.productId){
+    if (!params.productId) {
       return new NextResponse("Product ID is required", { status: 400 });
     }
 
     // Authenticate userId with Clerk to check if user is logged-in
     const { userId } = auth();
-    
+
     // If userId does not exist send back 401 response
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -56,41 +55,36 @@ export async function PATCH (
 
     // Extract body from the request
     const body = await req.json();
-    
+
     // Destructure fields out of body
-    const { 
-      name, 
+    const {
+      name,
       price,
       categoryId,
       colorId,
-      sizeId,
       images,
       isFeatured,
       isArchived
-     } = body;
+    } = body;
 
     // Check every required field
-    if (!name){
+    if (!name) {
       return new NextResponse("Name is required", { status: 400 });
     }
 
-    if (!price){
+    if (!price) {
       return new NextResponse("Price is required", { status: 400 });
     }
 
-    if (!categoryId){
+    if (!categoryId) {
       return new NextResponse("Category ID is required", { status: 400 });
     }
 
-    if (!colorId){
+    if (!colorId) {
       return new NextResponse("Color ID is required", { status: 400 });
     }
 
-    if (!sizeId){
-      return new NextResponse("Size ID is required", { status: 400 });
-    }
-
-    if (!images || !images.length){
+    if (!images || !images.length) {
       return new NextResponse("Images are required", { status: 400 });
     }
 
@@ -119,7 +113,6 @@ export async function PATCH (
         price,
         categoryId,
         colorId,
-        sizeId,
         images: {
           deleteMany: {}
         },
@@ -151,23 +144,23 @@ export async function PATCH (
   }
 };
 
-export async function DELETE (
+export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string, productId: string }}
-){
+  { params }: { params: { storeId: string, productId: string } }
+) {
   try {
     // Check parameters
-    if (!params.storeId){
+    if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 });
     }
 
-    if (!params.productId){
+    if (!params.productId) {
       return new NextResponse("Product ID is required", { status: 400 });
     }
 
     // Authenticate userId with Clerk to check if user is logged-in
     const { userId } = auth();
-    
+
     // If userId does not exist send back 401 response
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
