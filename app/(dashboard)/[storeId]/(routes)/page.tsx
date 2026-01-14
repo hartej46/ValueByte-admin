@@ -1,6 +1,6 @@
 // Global Imports
 import React from 'react';
-import { CreditCard, DollarSign, Package } from 'lucide-react';
+import { CreditCard, IndianRupee, Package } from 'lucide-react';
 
 // Local Imports
 import prismadb from '@/lib/prismadb';
@@ -10,8 +10,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -47,7 +45,7 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({
               <CardTitle className='text-sm font-medium'>
                 Total Revenue
               </CardTitle>
-              <DollarSign className='h-4 w-4 text-muted-foreground' />
+              <IndianRupee className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
