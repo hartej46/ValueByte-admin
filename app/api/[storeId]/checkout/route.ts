@@ -1,9 +1,8 @@
-import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 
 import { verifyToken } from '@clerk/backend';
 
-import { stripe } from '@/lib/stripe';
+import { razorpay } from '@/lib/razorpay';
 import prismadb from '@/lib/prismadb';
 
 const corsHeaders = {
@@ -132,22 +131,9 @@ export async function POST(
     }
   });
 
-  // Create an array of line items which represents a product that customer is purchasing
-  const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
-
-  // Populate the array with each product
-  products.forEach((product) => {
-    line_items.push({
-      quantity: 1,
-      price_data: {
-        currency: 'USD',
-        product_data: {
-          name: product.name,
-        },
-        unit_amount: product.price.toNumber() * 100
-      }
-    });
-  });
+  const totalAmount = products.reduce((total, product) => {
+    return total + product.price.toNumber();
+  }, 0);
 
   // Create the order in the database
   const order = await prismadb.order.create({
@@ -177,22 +163,30 @@ export async function POST(
     } as any)
   });
 
-  // Use line items to create the checkout session using Stripe API
-  const session = await stripe.checkout.sessions.create({
-    line_items,
-    mode: 'payment',
-    billing_address_collection: 'required',
-    phone_number_collection: {
-      enabled: true,
-    },
-    success_url: `${process.env.FRONTEND_STORE_URL}/cart?success=1`,
-    cancel_url: `${process.env.FRONTEND_STORE_URL}/cart?canceled=1`,
-    metadata: {
-      orderId: order.id
-    },
-  });
+  // Create Razorpay Order
+  const options = {
+    amount: Math.round(totalAmount * 100), // amount in the smallest currency unit
+    currency: "INR", // Changed to INR for Razorpay (adjust if needed)
+    receipt: order.id,
+    notes: {
+      orderId: order.id,
+      storeId: params.storeId
+    }
+  };
 
-  return NextResponse.json({ url: session.url }, {
+  if (!razorpay) {
+    return new NextResponse("Razorpay is not configured", { status: 500, headers: corsHeaders });
+  }
+
+  const razorpayOrder = await razorpay.orders.create(options);
+
+  return NextResponse.json({
+    orderId: razorpayOrder.id,
+    amount: razorpayOrder.amount,
+    currency: razorpayOrder.currency,
+    key_id: process.env.RAZORPAY_KEY_ID,
+    receipt: order.id
+  }, {
     headers: {
       ...corsHeaders,
       'Content-Type': 'application/json'

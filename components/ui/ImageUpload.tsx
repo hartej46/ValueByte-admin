@@ -31,7 +31,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   useEffect(() => {
     setIsMounted(true);
   }, []); // Only run once after the initial render
-  
+
   // Upload event handler
   const onUpload = (result: any) => {
     onChange(result.info.secure_url);
@@ -50,15 +50,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <div key={url} className="relative w-[200px] h-[200px] rounded-md overflow-hidden">
             <div className="z-10 absolute top-2 right-2">
               <Button
-               type="button"
-               onClick={() => onRemove(url)} 
-               variant="destructive"
-               size="icon"
+                type="button"
+                onClick={() => onRemove(url)}
+                variant="destructive"
+                size="icon"
               >
                 <Trash className="h-4 w-4" />
               </Button>
             </div>
-            <Image 
+            <Image
               fill
               className="object-cover"
               alt="Image"
@@ -68,7 +68,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </div>
         ))}
       </div>
-      <CldUploadWidget onUpload={onUpload} uploadPreset="ecommerce">
+      <CldUploadWidget onUpload={onUpload} uploadPreset="My_store">
         {({ open }) => {
           const onClick = () => {
             open();

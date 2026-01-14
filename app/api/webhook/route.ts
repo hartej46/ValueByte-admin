@@ -68,8 +68,10 @@ export async function POST(req: Request) {
       },
       data: {
         isPaid: true,
-        address: addressString,
-        phone: session?.customer_details?.phone || "",
+        // Using houseFlat as a fallback for the combined address string if needed, 
+        // though the checkout route now handles address saving independently.
+        houseFlat: addressString,
+        mobile: session?.customer_details?.phone || "",
       },
       include: {
         orderItems: true,

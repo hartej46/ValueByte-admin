@@ -13,7 +13,7 @@ const OrdersPage = async ({
 }: {
   params: { storeId: string }
 }) => {
-  
+
   // Fetch all orders specific to the active store
   const orders = await prismadb.order.findMany({
     where: {
@@ -34,8 +34,14 @@ const OrdersPage = async ({
   // Format each Order into a OrderColumn
   const formattedOrders: OrderColumn[] = orders.map((item) => ({
     id: item.id,
-    phone: item.phone,
-    address: item.address,
+    mobile: item.mobile,
+    address: [
+      item.houseFlat,
+      item.locality,
+      item.areaStreet,
+      item.landmark,
+      item.city
+    ].filter(Boolean).join(', '),
     products: item.orderItems.map((orderItem) => orderItem.product.name).join(', '),
     totalPrice: priceFormatter.format(item.orderItems.reduce((total, item) => {
       return total + Number(item.product.price)
@@ -47,7 +53,7 @@ const OrdersPage = async ({
   return (
     <div className='flex-col'>
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <OrderClient data={formattedOrders}/>
+        <OrderClient data={formattedOrders} />
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { ColumnDef } from "@tanstack/react-table"
 // This type is used to define the shape of our data.
 export type OrderColumn = {
   id: string;
-  phone: string;
+  mobile: string;
   address: string;
   isPaid: boolean;
   totalPrice: string;
@@ -19,7 +19,7 @@ export const columns: ColumnDef<OrderColumn>[] = [
     header: "Products",
   },
   {
-    accessorKey: "phone",
+    accessorKey: "mobile",
     header: "Phone",
   },
   {
