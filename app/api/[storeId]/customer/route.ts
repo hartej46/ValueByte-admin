@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prismadb from "@/lib/prismadb";
 import { verifyToken } from "@clerk/backend";
+import { getCorsHeaders } from "@/lib/cors";
 
 // Use CUSTOMER_CLERK_* keys for verifying tokens from store customers
 // These should be the same keys used in the ecommerce-store app
@@ -82,18 +83,7 @@ async function getCustomerIdFromRequest(req: Request): Promise<string | undefine
   }
 }
 
-const getCorsHeaders = (origin: string | null) => {
-  // Use the actual origin if present, otherwise fallback to '*'
-  // Note: Access-Control-Allow-Origin cannot be '*' if Access-Control-Allow-Credentials is true
-  const allowedOrigin = origin || "*";
 
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true'
-  };
-};
 
 export async function OPTIONS(req: Request) {
   return new NextResponse(null, {

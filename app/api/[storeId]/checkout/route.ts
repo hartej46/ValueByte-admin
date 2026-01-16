@@ -4,16 +4,9 @@ import { verifyToken } from '@clerk/backend';
 
 import { razorpay } from '@/lib/razorpay';
 import prismadb from '@/lib/prismadb';
+import { getCorsHeaders } from '@/lib/cors';
 
-const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = origin || "*";
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true"
-  };
-};
+
 
 function resolveCustomerClerkIssuer(): string | undefined {
   if (process.env.CUSTOMER_CLERK_ISSUER) return process.env.CUSTOMER_CLERK_ISSUER;

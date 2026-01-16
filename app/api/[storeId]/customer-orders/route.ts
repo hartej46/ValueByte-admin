@@ -3,13 +3,9 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@clerk/backend";
 
 import prismadb from "@/lib/prismadb";
+import { getCorsHeaders } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": process.env.FRONTEND_URL || "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Credentials": "true"
-};
+
 
 function resolveCustomerClerkIssuer(): string | undefined {
   if (process.env.CUSTOMER_CLERK_ISSUER) return process.env.CUSTOMER_CLERK_ISSUER;
@@ -52,8 +48,8 @@ async function getCustomerIdFromRequest(req: Request): Promise<string | undefine
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders });
+export async function OPTIONS(req: Request) {
+  return new NextResponse(null, { status: 200, headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function GET(
@@ -68,7 +64,7 @@ export async function GET(
     const customerId = await getCustomerIdFromRequest(req);
 
     if (!customerId) {
-      return new NextResponse("Unauthenticated", { status: 401, headers: corsHeaders });
+      return new NextResponse("Unauthenticated", { status: 401, headers: getCorsHeaders(req.headers.get('origin')) });
     }
 
     const orders = await prismadb.order.findMany({
@@ -88,9 +84,9 @@ export async function GET(
       },
     });
 
-    return NextResponse.json(orders, { headers: corsHeaders });
+    return NextResponse.json(orders, { headers: getCorsHeaders(req.headers.get('origin')) });
   } catch (error) {
     console.log("[CUSTOMER_ORDERS_GET]", error);
-    return new NextResponse("Internal error", { status: 500, headers: corsHeaders });
+    return new NextResponse("Internal error", { status: 500, headers: getCorsHeaders(req.headers.get('origin')) });
   }
 }
