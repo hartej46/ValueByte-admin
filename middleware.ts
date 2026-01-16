@@ -2,10 +2,16 @@ import { authMiddleware } from "@clerk/nextjs";
 
 export default authMiddleware({
   publicRoutes: [
-    "/",
-    "/api/:path*",
-    "/sign-in(.*)",
-    "/sign-up(.*)",
+    "/api/:path*/customer",
+    "/api/:path*/customer/:path*",
+    "/api/:path*/checkout",
+    "/api/:path*/checkout/:path*",
+    "/api/:path*/products",
+    "/api/:path*/products/:path*",
+    "/api/:path*/categories",
+    "/api/:path*/categories/:path*",
+    "/api/:path*/colors",
+    "/api/:path*/colors/:path*",
   ],
 });
 

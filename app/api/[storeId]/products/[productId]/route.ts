@@ -65,7 +65,8 @@ export async function PATCH(
       images,
       isFeatured,
       isArchived,
-      description
+      description,
+      stock
     } = body;
 
     // Check every required field
@@ -79,6 +80,10 @@ export async function PATCH(
 
     if (!price) {
       return new NextResponse("Price is required", { status: 400 });
+    }
+
+    if (stock === undefined || stock === null) {
+      return new NextResponse("Stock is required", { status: 400 });
     }
 
     if (!categoryId) {
@@ -107,8 +112,7 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    // General query to find and update a specific product
-    // Also deletes the images
+    // Update the product
     await prismadb.product.update({
       where: {
         id: params.productId
@@ -124,10 +128,10 @@ export async function PATCH(
         isFeatured,
         isArchived,
         description,
+        stock: parseInt(stock),
       }
     });
 
-    // Update the product by creating new images
     const product = await prismadb.product.update({
       where: {
         id: params.productId

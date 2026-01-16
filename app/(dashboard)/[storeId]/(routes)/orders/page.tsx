@@ -24,7 +24,8 @@ const OrdersPage = async ({
         include: {
           product: true
         }
-      }
+      },
+      customerAddress: true,
     },
     orderBy: {
       createdAt: 'desc'
@@ -32,23 +33,35 @@ const OrdersPage = async ({
   });
 
   // Format each Order into a OrderColumn
-  const formattedOrders: OrderColumn[] = orders.map((item) => ({
-    id: item.id,
-    mobile: item.mobile,
-    address: [
-      item.houseFlat,
-      item.locality,
-      item.areaStreet,
-      item.landmark,
-      item.city
-    ].filter(Boolean).join(', '),
-    products: item.orderItems.map((orderItem) => orderItem.product.name).join(', '),
-    totalPrice: priceFormatter.format(item.orderItems.reduce((total, item) => {
-      return total + Number(item.product.price)
-    }, 0)),
-    isPaid: item.isPaid,
-    createdAt: format(item.createdAt, "MMMM do, yyyy")
-  }));
+  const formattedOrders: OrderColumn[] = orders.map((item) => {
+    // If flat fields are empty, fallback to linked customerAddress
+    const addressData = {
+      mobile: item.mobile || item.customerAddress?.mobile || "",
+      houseFlat: item.houseFlat || item.customerAddress?.houseFlat || "",
+      locality: item.locality || item.customerAddress?.locality || "",
+      areaStreet: item.areaStreet || item.customerAddress?.areaStreet || "",
+      landmark: item.landmark || item.customerAddress?.landmark || "",
+      city: item.city || item.customerAddress?.city || "",
+    };
+
+    return {
+      id: item.id,
+      mobile: addressData.mobile,
+      address: [
+        addressData.houseFlat,
+        addressData.locality,
+        addressData.areaStreet,
+        addressData.landmark,
+        addressData.city
+      ].filter(Boolean).join(', '),
+      products: item.orderItems.map((orderItem) => orderItem.product.name).join(', '),
+      totalPrice: priceFormatter.format(item.orderItems.reduce((total, item) => {
+        return total + Number(item.product.price)
+      }, 0)),
+      isPaid: item.isPaid,
+      createdAt: format(item.createdAt, "MMMM do, yyyy")
+    }
+  });
 
   return (
     <div className='flex-col'>

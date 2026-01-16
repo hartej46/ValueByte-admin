@@ -24,34 +24,49 @@ function resolveCustomerClerkIssuer(): string | undefined {
 }
 
 async function getCustomerIdFromRequest(req: Request): Promise<string | undefined> {
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader?.toLowerCase().startsWith('bearer ')) return undefined;
-
-  const secretKey = process.env.CUSTOMER_CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY;
-  const issuer = resolveCustomerClerkIssuer();
-  if (!secretKey) return undefined;
-
-  const token = authHeader.slice(7);
   try {
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
+      console.log('[ADDRESS_AUTH] No Authorization header found in addressId route');
+      return undefined;
+    }
+
+    const secretKey = process.env.CUSTOMER_CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY;
+    if (!secretKey) {
+      console.error('[ADDRESS_AUTH] Missing Clerk Secret Key');
+      return undefined;
+    }
+
+    const token = authHeader.slice(7);
+    const issuer = resolveCustomerClerkIssuer();
     const payload = await verifyToken(token, {
-      secretKey,
-      issuer: issuer ?? null,
+      secretKey: secretKey!,
+      issuer: issuer || null,
     });
+
+    console.log('[ADDRESS_AUTH] Token verified for sub:', payload?.sub);
     return payload?.sub || undefined;
-  } catch {
+  } catch (error: any) {
+    console.error('[ADDRESS_AUTH] verifyToken failed:', error.message);
     return undefined;
   }
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": process.env.FRONTEND_URL || "http://localhost:3000",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Credentials": "true"
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = origin || "*";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true"
+  };
 };
 
-export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders });
+export async function OPTIONS(req: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(req.headers.get('origin'))
+  });
 }
 
 // Delete address
@@ -59,10 +74,14 @@ export async function DELETE(
   req: Request,
   { params }: { params: { storeId: string; addressId: string } }
 ) {
+  const origin = req.headers.get('origin');
   try {
     const clerkId = await getCustomerIdFromRequest(req);
     if (!clerkId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return new NextResponse("Unauthorized", {
+        status: 401,
+        headers: getCorsHeaders(origin)
+      });
     }
 
     // Get customer and verify address ownership
@@ -71,7 +90,10 @@ export async function DELETE(
     });
 
     if (!customer) {
-      return new NextResponse("Customer not found", { status: 404 });
+      return new NextResponse("Customer not found", {
+        status: 404,
+        headers: getCorsHeaders(origin)
+      });
     }
 
     // Verify address belongs to this customer
@@ -83,7 +105,10 @@ export async function DELETE(
     });
 
     if (!address) {
-      return new NextResponse("Address not found", { status: 404 });
+      return new NextResponse("Address not found", {
+        status: 404,
+        headers: getCorsHeaders(origin)
+      });
     }
 
     // Delete the address
@@ -91,10 +116,13 @@ export async function DELETE(
       where: { id: params.addressId }
     });
 
-    return NextResponse.json({ success: true }, { headers: corsHeaders });
+    return NextResponse.json({ success: true }, { headers: getCorsHeaders(origin) });
   } catch (error) {
     console.log('[ADDRESS_DELETE]', error);
-    return new NextResponse("Internal error", { status: 500 });
+    return new NextResponse("Internal error", {
+      status: 500,
+      headers: getCorsHeaders(origin)
+    });
   }
 }
 
@@ -103,10 +131,14 @@ export async function PUT(
   req: Request,
   { params }: { params: { storeId: string; addressId: string } }
 ) {
+  const origin = req.headers.get('origin');
   try {
     const clerkId = await getCustomerIdFromRequest(req);
     if (!clerkId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return new NextResponse("Unauthorized", {
+        status: 401,
+        headers: getCorsHeaders(origin)
+      });
     }
 
     // Get customer and verify address ownership
@@ -115,7 +147,10 @@ export async function PUT(
     });
 
     if (!customer) {
-      return new NextResponse("Customer not found", { status: 404 });
+      return new NextResponse("Customer not found", {
+        status: 404,
+        headers: getCorsHeaders(origin)
+      });
     }
 
     // Verify address belongs to this customer
@@ -127,7 +162,10 @@ export async function PUT(
     });
 
     if (!address) {
-      return new NextResponse("Address not found", { status: 404 });
+      return new NextResponse("Address not found", {
+        status: 404,
+        headers: getCorsHeaders(origin)
+      });
     }
 
     // Unset all default addresses for this customer
@@ -142,9 +180,12 @@ export async function PUT(
       data: { isDefault: true }
     });
 
-    return NextResponse.json(updatedAddress, { headers: corsHeaders });
+    return NextResponse.json(updatedAddress, { headers: getCorsHeaders(origin) });
   } catch (error) {
     console.log('[ADDRESS_SET_DEFAULT]', error);
-    return new NextResponse("Internal error", { status: 500 });
+    return new NextResponse("Internal error", {
+      status: 500,
+      headers: getCorsHeaders(origin)
+    });
   }
 }

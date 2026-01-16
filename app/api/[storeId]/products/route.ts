@@ -27,7 +27,8 @@ export async function POST(
       images,
       isFeatured,
       isArchived,
-      description
+      description,
+      stock
     } = body;
 
     // Check every required field
@@ -43,6 +44,10 @@ export async function POST(
       return new NextResponse("Price is required", { status: 400 });
     }
 
+    if (stock === undefined || stock === null) {
+      return new NextResponse("Stock is required", { status: 400 });
+    }
+
     if (!categoryId) {
       return new NextResponse("Category ID is required", { status: 400 });
     }
@@ -50,7 +55,6 @@ export async function POST(
     if (!colorId) {
       return new NextResponse("Color ID is required", { status: 400 });
     }
-
 
     if (!images || !images.length) {
       return new NextResponse("Images are required", { status: 400 });
@@ -83,6 +87,7 @@ export async function POST(
         isFeatured,
         isArchived,
         description,
+        stock: parseInt(stock),
         categoryId,
         colorId,
         storeId: params.storeId,

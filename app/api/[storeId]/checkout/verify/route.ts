@@ -2,15 +2,18 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import prismadb from "@/lib/prismadb";
 
-const corsHeaders = {
-    "Access-Control-Allow-Origin": process.env.FRONTEND_URL || "http://localhost:3000",
+const getCorsHeaders = (origin: string | null) => ({
+    "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Credentials": "true"
-};
+});
 
-export async function OPTIONS() {
-    return new NextResponse(null, { status: 200, headers: corsHeaders });
+export async function OPTIONS(req: Request) {
+    return new NextResponse(null, {
+        status: 200,
+        headers: getCorsHeaders(req.headers.get('origin'))
+    });
 }
 
 export async function POST(
@@ -26,7 +29,10 @@ export async function POST(
         } = await req.json();
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
-            return new NextResponse("Missing required fields", { status: 400, headers: corsHeaders });
+            return new NextResponse("Missing required fields", {
+                status: 400,
+                headers: getCorsHeaders(req.headers.get('origin'))
+            });
         }
 
         const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -38,20 +44,42 @@ export async function POST(
         const isAuthentic = expectedSignature === razorpay_signature;
 
         if (isAuthentic) {
-            await prismadb.order.update({
+            const order = await prismadb.order.update({
                 where: { id: orderId },
                 data: {
                     isPaid: true,
-                    // You can also store the payment ID if needed
+                },
+                include: {
+                    orderItems: true
                 }
             });
 
-            return NextResponse.json({ message: "Payment verified successfully" }, { headers: corsHeaders });
+            // Update stock for each product in the order
+            for (const item of order.orderItems) {
+                await prismadb.product.update({
+                    where: { id: item.productId },
+                    data: {
+                        stock: {
+                            decrement: item.quantity
+                        }
+                    }
+                });
+            }
+
+            return NextResponse.json({ message: "Payment verified successfully" }, {
+                headers: getCorsHeaders(req.headers.get('origin'))
+            });
         } else {
-            return new NextResponse("Invalid signature", { status: 400, headers: corsHeaders });
+            return new NextResponse("Invalid signature", {
+                status: 400,
+                headers: getCorsHeaders(req.headers.get('origin'))
+            });
         }
     } catch (error) {
         console.log("[RAZORPAY_VERIFY_POST]", error);
-        return new NextResponse("Internal error", { status: 500, headers: corsHeaders });
+        return new NextResponse("Internal error", {
+            status: 500,
+            headers: getCorsHeaders(req.headers.get('origin'))
+        });
     }
 }

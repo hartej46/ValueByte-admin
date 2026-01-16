@@ -5,11 +5,14 @@ import { verifyToken } from '@clerk/backend';
 import { razorpay } from '@/lib/razorpay';
 import prismadb from '@/lib/prismadb';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": process.env.FRONTEND_URL || "http://localhost:3000",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Credentials": "true"
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = origin || "*";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true"
+  };
 };
 
 function resolveCustomerClerkIssuer(): string | undefined {
@@ -33,45 +36,62 @@ function resolveCustomerClerkIssuer(): string | undefined {
 }
 
 async function getCustomerIdFromRequest(req: Request): Promise<string | undefined> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.toLowerCase().startsWith("bearer ")) return undefined;
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+  if (!authHeader?.toLowerCase().startsWith("bearer ")) {
+    console.log('[CHECKOUT_AUTH] Missing or invalid authorization header');
+    return undefined;
+  }
 
   const secretKey = process.env.CUSTOMER_CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY;
-  const issuer = resolveCustomerClerkIssuer();
-  if (!secretKey) return undefined;
+  if (!secretKey) {
+    console.error('[CHECKOUT_AUTH] Missing Clerk Secret Key');
+    return undefined;
+  }
 
   const token = authHeader.slice(7);
+  const issuer = resolveCustomerClerkIssuer();
   try {
     const payload = await verifyToken(token, {
       secretKey,
-      issuer: issuer ?? null,
+      issuer: issuer || null,
     });
     return payload?.sub || undefined;
-  } catch {
+  } catch (error: any) {
+    console.error('[CHECKOUT_AUTH] verifyToken failed:', error.message);
     return undefined;
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders });
+export async function OPTIONS(req: Request) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(req.headers.get('origin'))
+  });
 }
 
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string } }
 ) {
+  const origin = req.headers.get('origin');
 
   // Check if storeId exists
   if (!params.storeId) {
     return new NextResponse("Store ID is required", { status: 400 });
   }
 
-  const { productIds, address, addressId } = await req.json();
+  const { items: checkoutItems, address, addressId } = await req.json();
 
   const customerId = await getCustomerIdFromRequest(req);
+  if (!customerId) {
+    return new NextResponse("Unauthorized: Token verification failed", {
+      status: 401,
+      headers: getCorsHeaders(origin)
+    });
+  }
 
-  if (!productIds || productIds.length === 0) {
-    return new NextResponse("Product IDs are required", { status: 400 });
+  if (!checkoutItems || checkoutItems.length === 0) {
+    return new NextResponse("Products are required", { status: 400 });
   }
 
   if (!address && !addressId) {
@@ -79,30 +99,45 @@ export async function POST(
   }
 
   let customerAddressId = addressId;
+  let finalAddress = address;
+
+  // 1. Get or create customer and handle address
+  let customer = await prismadb.customer.findUnique({
+    where: { clerkId: customerId || "" }
+  });
+
+  if (!customer && customerId) {
+    customer = await prismadb.customer.create({
+      data: { clerkId: customerId }
+    });
+  }
+
+  // If addressId is provided, fetch that address to populate flat fields
+  if (addressId) {
+    const savedAddress = await prismadb.customerAddress.findUnique({
+      where: { id: addressId }
+    });
+    if (savedAddress) {
+      finalAddress = {
+        fullName: savedAddress.fullName,
+        mobile: savedAddress.mobile,
+        houseFlat: savedAddress.houseFlat,
+        locality: savedAddress.locality,
+        areaStreet: savedAddress.areaStreet,
+        landmark: savedAddress.landmark,
+        city: savedAddress.city,
+      };
+    }
+  }
 
   // If address object is provided (new address), create it first
-  if (address && !addressId) {
-    // Get or create customer
-    let customer = await prismadb.customer.findUnique({
-      where: { clerkId: customerId || "" }
-    });
-
-    if (!customer && customerId) {
-      customer = await prismadb.customer.create({
-        data: { clerkId: customerId }
-      });
-    }
-
+  if (address && !addressId && customer) {
     // If setting as default, unset other defaults
-    if (address.isDefault && customer) {
+    if (address.isDefault) {
       await prismadb.customerAddress.updateMany({
         where: { customerId: customer.id },
         data: { isDefault: false }
       });
-    }
-
-    if (!customer) {
-      return new NextResponse("Customer creation failed", { status: 500, headers: corsHeaders });
     }
 
     const newAddress = await prismadb.customerAddress.create({
@@ -120,7 +155,10 @@ export async function POST(
     });
 
     customerAddressId = newAddress.id;
+    finalAddress = address;
   }
+
+  const productIds = checkoutItems.map((item: any) => item.id);
 
   // Fetch products by IDs in checkout route
   const products = await prismadb.product.findMany({
@@ -131,33 +169,46 @@ export async function POST(
     }
   });
 
-  const totalAmount = products.reduce((total, product) => {
-    return total + product.price.toNumber();
+  // Check stock Availability
+  for (const item of checkoutItems) {
+    const product = products.find((p) => p.id === item.id);
+    if (!product) {
+      return new NextResponse(`Product ${item.id} not found`, { status: 404 });
+    }
+    if (product.stock < item.quantity) {
+      return new NextResponse(`Not enough stock for ${product.name}. Available: ${product.stock}`, { status: 400 });
+    }
+  }
+
+  const totalAmount = checkoutItems.reduce((total: number, item: any) => {
+    const product = products.find((p) => p.id === item.id);
+    return total + (product ? product.price.toNumber() * item.quantity : 0);
   }, 0);
 
   // Create the order in the database
   const order = await prismadb.order.create({
     data: ({
       storeId: params.storeId,
-      ...(customerId ? { customerId } : {}),
-      ...(customerAddressId ? { customerAddressId } : {}),
+      customerId: customer?.id || null, // Use database UUID not clerkId
+      customerAddressId: customerAddressId || null,
       isPaid: false,
       // Keep address fields for backward compatibility and new addresses
-      fullName: address?.fullName || "",
-      email: address?.email || "",
-      mobile: address?.mobile || "",
-      houseFlat: address?.houseFlat || "",
-      locality: address?.locality || "",
-      areaStreet: address?.areaStreet || "",
-      landmark: address?.landmark || null,
-      city: address?.city || "",
+      fullName: finalAddress?.fullName || "",
+      email: finalAddress?.email || "",
+      mobile: finalAddress?.mobile || "",
+      houseFlat: finalAddress?.houseFlat || "",
+      locality: finalAddress?.locality || "",
+      areaStreet: finalAddress?.areaStreet || "",
+      landmark: finalAddress?.landmark || null,
+      city: finalAddress?.city || "",
       orderItems: {
-        create: productIds.map((productId: string) => ({
+        create: checkoutItems.map((item: any) => ({
           product: {
             connect: {
-              id: productId
+              id: item.id
             }
-          }
+          },
+          quantity: item.quantity
         }))
       }
     } as any)
@@ -175,7 +226,10 @@ export async function POST(
   };
 
   if (!razorpay) {
-    return new NextResponse("Razorpay is not configured", { status: 500, headers: corsHeaders });
+    return new NextResponse("Razorpay is not configured", {
+      status: 500,
+      headers: getCorsHeaders(origin)
+    });
   }
 
   const razorpayOrder = await razorpay.orders.create(options);
@@ -188,7 +242,7 @@ export async function POST(
     receipt: order.id
   }, {
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(origin),
       'Content-Type': 'application/json'
     }
   });
