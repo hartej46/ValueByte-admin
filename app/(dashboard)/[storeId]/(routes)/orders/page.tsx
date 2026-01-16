@@ -36,6 +36,7 @@ const OrdersPage = async ({
   const formattedOrders: OrderColumn[] = orders.map((item) => {
     // If flat fields are empty, fallback to linked customerAddress
     const addressData = {
+      fullName: item.fullName || item.customerAddress?.fullName || "",
       mobile: item.mobile || item.customerAddress?.mobile || "",
       houseFlat: item.houseFlat || item.customerAddress?.houseFlat || "",
       locality: item.locality || item.customerAddress?.locality || "",
@@ -46,6 +47,7 @@ const OrdersPage = async ({
 
     return {
       id: item.id,
+      fullName: addressData.fullName,
       mobile: addressData.mobile,
       address: [
         addressData.houseFlat,
@@ -54,9 +56,9 @@ const OrdersPage = async ({
         addressData.landmark,
         addressData.city
       ].filter(Boolean).join(', '),
-      products: item.orderItems.map((orderItem) => orderItem.product.name).join(', '),
+      products: item.orderItems.map((orderItem) => `${orderItem.product.name} (${orderItem.quantity})`).join(', '),
       totalPrice: priceFormatter.format(item.orderItems.reduce((total, item) => {
-        return total + Number(item.product.price)
+        return total + Number(item.product.price) * (item.quantity)
       }, 0)),
       isPaid: item.isPaid,
       createdAt: format(item.createdAt, "MMMM do, yyyy")
