@@ -95,14 +95,23 @@ export async function POST(
   let finalAddress = address;
 
   // 1. Get or create customer and handle address
+  console.log('[CHECKOUT_DEBUG] Clerk Customer ID:', customerId);
+
   let customer = await prismadb.customer.findUnique({
     where: { clerkId: customerId || "" }
   });
+
+  if (!customer) {
+    console.log('[CHECKOUT_DEBUG] Customer not found, creating new one for:', customerId);
+  } else {
+    console.log('[CHECKOUT_DEBUG] Found existing customer:', customer.id);
+  }
 
   if (!customer && customerId) {
     customer = await prismadb.customer.create({
       data: { clerkId: customerId }
     });
+    console.log('[CHECKOUT_DEBUG] Created new customer:', customer.id);
   }
 
   // If addressId is provided, fetch that address to populate flat fields

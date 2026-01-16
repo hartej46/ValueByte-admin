@@ -67,10 +67,17 @@ export async function GET(
       return new NextResponse("Unauthenticated", { status: 401, headers: getCorsHeaders(req.headers.get('origin')) });
     }
 
+    console.log('[CUSTOMER_ORDERS_DEBUG] Fetching orders for:', {
+      storeId: params.storeId,
+      customerId
+    });
+
     const orders = await prismadb.order.findMany({
       where: {
         storeId: params.storeId,
-        customerId,
+        customer: {
+          clerkId: customerId
+        }
       } as any,
       include: {
         orderItems: {
@@ -83,6 +90,8 @@ export async function GET(
         createdAt: "desc",
       },
     });
+
+    console.log('[CUSTOMER_ORDERS_DEBUG] Found orders:', orders.length);
 
     return NextResponse.json(orders, { headers: getCorsHeaders(req.headers.get('origin')) });
   } catch (error) {
