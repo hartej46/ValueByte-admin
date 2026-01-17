@@ -184,7 +184,16 @@ export async function POST(
 
   const totalAmount = checkoutItems.reduce((total: number, item: any) => {
     const product = products.find((p) => p.id === item.id);
-    return total + (product ? product.price.toNumber() * item.quantity : 0);
+    if (!product) return total;
+
+    const price = product.price.toNumber();
+    const discountedPrice = product.discountedPrice ? product.discountedPrice.toNumber() : null;
+
+    const effectivePrice = (discountedPrice && discountedPrice > 0 && discountedPrice < price)
+      ? discountedPrice
+      : price;
+
+    return total + (effectivePrice * item.quantity);
   }, 0);
 
   // Create the order in the database
