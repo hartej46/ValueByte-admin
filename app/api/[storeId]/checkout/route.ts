@@ -70,7 +70,7 @@ export async function POST(
 
   // Check if storeId exists
   if (!params.storeId) {
-    return new NextResponse("Store ID is required", { status: 400 });
+    return new NextResponse("Store ID is required", { status: 400, headers: getCorsHeaders(origin) });
   }
 
   const { items: checkoutItems, address, addressId } = await req.json();
@@ -84,11 +84,11 @@ export async function POST(
   }
 
   if (!checkoutItems || checkoutItems.length === 0) {
-    return new NextResponse("Products are required", { status: 400 });
+    return new NextResponse("Products are required", { status: 400, headers: getCorsHeaders(origin) });
   }
 
   if (!address && !addressId) {
-    return new NextResponse("Address is required", { status: 400 });
+    return new NextResponse("Address is required", { status: 400, headers: getCorsHeaders(origin) });
   }
 
   let customerAddressId = addressId;
@@ -175,10 +175,10 @@ export async function POST(
   for (const item of checkoutItems) {
     const product = products.find((p) => p.id === item.id);
     if (!product) {
-      return new NextResponse(`Product ${item.id} not found`, { status: 404 });
+      return new NextResponse(`Product ${item.id} not found`, { status: 404, headers: getCorsHeaders(origin) });
     }
     if (product.stock < item.quantity) {
-      return new NextResponse(`Not enough stock for ${product.name}. Available: ${product.stock}`, { status: 400 });
+      return new NextResponse(`Not enough stock for ${product.name}. Available: ${product.stock}`, { status: 400, headers: getCorsHeaders(origin) });
     }
   }
 
