@@ -41,13 +41,26 @@ const formSchema = z.object({
   name: z.string().min(1),
   images: z.object({ url: z.string() }).array(),
   price: z.coerce.number().min(1),
+  discountedPrice: z.coerce.number().optional().nullable(),
   stock: z.coerce.number().min(0),
   categoryId: z.string().min(1),
   colorId: z.string().min(1),
   description: z.string().min(1),
   isFeatured: z.boolean().default(false).optional(),
   isArchived: z.boolean().default(false).optional(),
-});
+}).refine(
+  (data) => {
+    // If discountedPrice is provided and greater than 0, it must be less than price
+    if (data.discountedPrice && data.discountedPrice > 0) {
+      return data.discountedPrice < data.price;
+    }
+    return true;
+  },
+  {
+    message: "Discounted price must be less than the regular price",
+    path: ["discountedPrice"],
+  }
+);
 
 // extract the inferred type
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -89,11 +102,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
     defaultValues: initialData ? {
       ...initialData,
       price: parseFloat(String(initialData?.price)),
+      discountedPrice: initialData?.discountedPrice ? parseFloat(String(initialData?.discountedPrice)) : null,
       stock: parseInt(String(initialData?.stock)),
     } : {
       name: '',
       images: [],
       price: 0,
+      discountedPrice: null,
       stock: 0,
       categoryId: '',
       colorId: '',
@@ -248,6 +263,33 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   <FormControl>
                     <Input type="number" disabled={loading} placeholder="0" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="discountedPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discounted Price (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      disabled={loading}
+                      placeholder="Leave empty for no discount"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === '' ? null : parseFloat(value));
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Must be less than regular price to be active
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

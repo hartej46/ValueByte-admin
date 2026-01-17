@@ -62,23 +62,24 @@ model Color {
 }
 
 model Product {
-  id          String      @id @default(uuid())
-  storeId     String
-  categoryId  String
-  name        String
-  price       Decimal
-  stock       Int         @default(0)
-  description String      @default("")
-  isFeatured  Boolean     @default(false)
-  isArchived  Boolean     @default(false)
-  colorId     String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  images      Image[]
-  orderItems  OrderItem[]
-  category    Category    @relation("CategoryToProduct", fields: [categoryId], references: [id])
-  color       Color       @relation(fields: [colorId], references: [id])
-  store       Store       @relation("StoreToProduct", fields: [storeId], references: [id])
+  id              String      @id @default(uuid())
+  storeId         String
+  categoryId      String
+  name            String
+  price           Decimal
+  discountedPrice Decimal?
+  stock           Int         @default(0)
+  description     String      @default("")
+  isFeatured      Boolean     @default(false)
+  isArchived      Boolean     @default(false)
+  colorId         String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  images          Image[]
+  orderItems      OrderItem[]
+  category        Category    @relation("CategoryToProduct", fields: [categoryId], references: [id])
+  color           Color       @relation(fields: [colorId], references: [id])
+  store           Store       @relation("StoreToProduct", fields: [storeId], references: [id])
 
   @@index([storeId])
   @@index([categoryId])
