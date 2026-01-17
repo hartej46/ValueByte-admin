@@ -14,6 +14,7 @@ export default authMiddleware({
     "/api/:path*/colors/:path*",
     "/api/webhook/:path*",
     "/api/:path*/debug-orders",
+    "/api/:path*/customer-orders",
   ],
 });
 
