@@ -9,6 +9,7 @@ export type CategoryColumn = {
   id: string
   name: string
   billboardLabel: string
+  isArchived: boolean
   createdAt: string
 }
 

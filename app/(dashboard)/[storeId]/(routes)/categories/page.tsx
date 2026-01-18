@@ -12,7 +12,7 @@ const CategoriesPage = async ({
 }: {
   params: { storeId: string }
 }) => {
-  
+
   // Fetch all Categories specific to the active store
   const categories = await prismadb.category.findMany({
     where: {
@@ -31,13 +31,14 @@ const CategoriesPage = async ({
     id: item.id,
     name: item.name,
     billboardLabel: item.billboard.label,
+    isArchived: (item as any).isArchived,
     createdAt: format(item.createdAt, "MMMM do, yyyy"),
   }))
 
   return (
     <div className='flex-col'>
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <CategoryClient data={formattedCategories}/>
+        <CategoryClient data={formattedCategories} />
       </div>
     </div>
   );

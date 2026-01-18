@@ -168,15 +168,25 @@ export async function POST(
       id: {
         in: productIds
       }
+    },
+    include: {
+      category: true
     }
   });
 
-  // Check stock Availability
+  // Check stock and availability (archived)
   for (const item of checkoutItems) {
     const product = products.find((p) => p.id === item.id);
     if (!product) {
       return new NextResponse(`Product ${item.id} not found`, { status: 404, headers: getCorsHeaders(origin) });
     }
+
+    // Check if product or its category is archived
+    const productAny = product as any;
+    if (productAny.isArchived || productAny.category?.isArchived) {
+      return new NextResponse(`Product ${product.name} is no longer available. Please remove it from your cart.`, { status: 400, headers: getCorsHeaders(origin) });
+    }
+
     if (product.stock < item.quantity) {
       return new NextResponse(`Not enough stock for ${product.name}. Available: ${product.stock}`, { status: 400, headers: getCorsHeaders(origin) });
     }

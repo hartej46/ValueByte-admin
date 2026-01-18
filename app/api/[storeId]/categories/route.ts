@@ -58,7 +58,7 @@ export async function POST(
         billboardId,
         isArchived,
         storeId: params.storeId
-      }
+      } as any
     });
 
     // Send back response with the category
@@ -82,8 +82,9 @@ export async function GET(
     // Find all categories available in that store in the database
     const categories = await prismadb.category.findMany({
       where: {
-        storeId: params.storeId
-      }
+        storeId: params.storeId,
+        isArchived: false
+      } as any
     });
 
     // Send back response with all categories

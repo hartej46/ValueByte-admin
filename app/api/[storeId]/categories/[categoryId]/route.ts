@@ -22,6 +22,12 @@ export async function GET(
       }
     });
 
+    const categoryAny = category as any;
+
+    if (categoryAny?.isArchived) {
+      return new NextResponse("Category is archived", { status: 404 });
+    }
+
     return NextResponse.json(category);
   } catch (error) {
     console.log('[CATEGORY_GET]', error);
@@ -89,7 +95,7 @@ export async function PATCH(
         name,
         billboardId,
         isArchived,
-      }
+      } as any
     });
 
     return NextResponse.json(category);

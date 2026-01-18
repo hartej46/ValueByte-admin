@@ -42,7 +42,7 @@ model Category {
   updatedAt   DateTime  @updatedAt
   billboard   Billboard @relation(fields: [billboardId], references: [id])
   store       Store     @relation("StoreToCategory", fields: [storeId], references: [id])
-  isArchived   Boolean   @default(false)
+  isArchived  Boolean   @default(false)
   products    Product[] @relation("CategoryToProduct")
 
   @@index([storeId])

@@ -137,8 +137,11 @@ export async function GET(
         categoryId,
         colorId,
         isFeatured: isFeatured ? true : undefined,
-        isArchived: false
-      },
+        isArchived: false,
+        category: {
+          isArchived: false
+        }
+      } as any,
       include: {
         images: true,
         category: true,

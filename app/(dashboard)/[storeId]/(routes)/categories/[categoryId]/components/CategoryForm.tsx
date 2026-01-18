@@ -77,7 +77,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   // 1. Define form with useForm hook & zodResolver for validation
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      ...initialData,
+      isArchived: !!(initialData as any).isArchived
+    } : {
       name: '',
       billboardId: '',
       isArchived: false,

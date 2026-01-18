@@ -24,6 +24,12 @@ export async function GET(
       }
     });
 
+    const productAny = product as any;
+
+    if (productAny?.isArchived || productAny?.category?.isArchived) {
+      return new NextResponse("Product is no longer available", { status: 404 });
+    }
+
     return NextResponse.json(product);
   } catch (error) {
     console.log('[PRODUCT_GET]', error);
