@@ -200,8 +200,14 @@ export async function DELETE(
     });
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: any) {
     console.log('[PRODUCT_DELETE]', error);
-    return new NextResponse("Make sure you removed all orders using this product first. Alternatively, you can archive the product to hide it from the store while keeping order history.", { status: 400 });
+
+    // Check for Prisma foreign key constraint violation (P2003)
+    if (error.code === 'P2003') {
+      return new NextResponse("Make sure you removed all orders using this product first. Alternatively, you can archive the product to hide it from the store while keeping order history.", { status: 400 });
+    }
+
+    return new NextResponse("Internal error", { status: 500 });
   }
 };

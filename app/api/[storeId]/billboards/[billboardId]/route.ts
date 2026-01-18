@@ -139,8 +139,14 @@ export async function DELETE(
     });
 
     return NextResponse.json(billboard);
-  } catch (error) {
+  } catch (error: any) {
     console.log('[BILLBOARD_DELETE]', error);
-    return new NextResponse("Make sure you removed all categories using this billboard first.", { status: 400 });
+
+    // Check for Prisma foreign key constraint violation (P2003)
+    if (error.code === 'P2003') {
+      return new NextResponse("Make sure you removed all categories using this billboard first.", { status: 400 });
+    }
+
+    return new NextResponse("Internal error", { status: 500 });
   }
 };
