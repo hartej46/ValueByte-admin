@@ -2,13 +2,13 @@ import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
-export async function GET (
+export async function GET(
   req: Request,
-  { params }: { params: { billboardId: string }}
-){
+  { params }: { params: { billboardId: string } }
+) {
   try {
     // Check parameters
-    if (!params.billboardId){
+    if (!params.billboardId) {
       return new NextResponse("Billboard ID is required", { status: 400 });
     }
 
@@ -26,23 +26,23 @@ export async function GET (
   }
 };
 
-export async function PATCH (
+export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string, billboardId: string }}
-){
+  { params }: { params: { storeId: string, billboardId: string } }
+) {
   try {
     // Check parameters
-    if (!params.storeId){
+    if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 });
     }
 
-    if (!params.billboardId){
+    if (!params.billboardId) {
       return new NextResponse("Billboard ID is required", { status: 400 });
     }
 
     // Authenticate userId with Clerk to check if user is logged-in
     const { userId } = auth();
-    
+
     // If userId does not exist send back 401 response
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -50,7 +50,7 @@ export async function PATCH (
 
     // Extract body from the request
     const body = await req.json();
-    
+
     // Destructure data from body
     const { label, imageUrl } = body;
 
@@ -95,23 +95,23 @@ export async function PATCH (
   }
 };
 
-export async function DELETE (
+export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string, billboardId: string }}
-){
+  { params }: { params: { storeId: string, billboardId: string } }
+) {
   try {
     // Check parameters
-    if (!params.storeId){
+    if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 });
     }
 
-    if (!params.billboardId){
+    if (!params.billboardId) {
       return new NextResponse("Billboard ID is required", { status: 400 });
     }
 
     // Authenticate userId with Clerk to check if user is logged-in
     const { userId } = auth();
-    
+
     // If userId does not exist send back 401 response
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -132,7 +132,7 @@ export async function DELETE (
     }
 
     // Find and Delete Billboard
-    const billboard = await prismadb.billboard.deleteMany({
+    const billboard = await prismadb.billboard.delete({
       where: {
         id: params.billboardId
       }
@@ -141,6 +141,6 @@ export async function DELETE (
     return NextResponse.json(billboard);
   } catch (error) {
     console.log('[BILLBOARD_DELETE]', error);
-    return new NextResponse("Internal error", { status: 500 });
+    return new NextResponse("Make sure you removed all categories using this billboard first.", { status: 400 });
   }
 };

@@ -202,6 +202,6 @@ export async function DELETE(
     return NextResponse.json(product);
   } catch (error) {
     console.log('[PRODUCT_DELETE]', error);
-    return new NextResponse("Make sure you removed all orders using this product first.", { status: 400 });
+    return new NextResponse("Make sure you removed all orders using this product first. Alternatively, you can archive the product to hide it from the store while keeping order history.", { status: 400 });
   }
 };
