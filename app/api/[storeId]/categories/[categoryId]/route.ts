@@ -2,13 +2,13 @@ import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
-export async function GET (
+export async function GET(
   req: Request,
-  { params }: { params: { categoryId: string }}
-){
+  { params }: { params: { categoryId: string } }
+) {
   try {
     // Check parameters
-    if (!params.categoryId){
+    if (!params.categoryId) {
       return new NextResponse("Category ID is required", { status: 400 });
     }
 
@@ -29,23 +29,23 @@ export async function GET (
   }
 };
 
-export async function PATCH (
+export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string, categoryId: string }}
-){
+  { params }: { params: { storeId: string, categoryId: string } }
+) {
   try {
     // Check parameters
-    if (!params.storeId){
+    if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 });
     }
 
-    if (!params.categoryId){
+    if (!params.categoryId) {
       return new NextResponse("Category ID is required", { status: 400 });
     }
 
     // Authenticate userId with Clerk to check if user is logged-in
     const { userId } = auth();
-    
+
     // If userId does not exist send back 401 response
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
@@ -53,9 +53,9 @@ export async function PATCH (
 
     // Extract body from the request
     const body = await req.json();
-    
+
     // Destructure data from body
-    const { name, billboardId } = body;
+    const { name, billboardId, isArchived } = body;
 
     // Check data
     if (!name) {
@@ -81,13 +81,14 @@ export async function PATCH (
     }
 
     // Find and Update a specific Category
-    const category = await prismadb.category.updateMany({
+    const category = await prismadb.category.update({
       where: {
         id: params.categoryId
       },
       data: {
         name,
         billboardId,
+        isArchived,
       }
     });
 
@@ -98,23 +99,23 @@ export async function PATCH (
   }
 };
 
-export async function DELETE (
+export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string, categoryId: string }}
-){
+  { params }: { params: { storeId: string, categoryId: string } }
+) {
   try {
     // Check parameters
-    if (!params.storeId){
+    if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 });
     }
 
-    if (!params.categoryId){
+    if (!params.categoryId) {
       return new NextResponse("Category ID is required", { status: 400 });
     }
 
     // Authenticate userId with Clerk to check if user is logged-in
     const { userId } = auth();
-    
+
     // If userId does not exist send back 401 response
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 401 });

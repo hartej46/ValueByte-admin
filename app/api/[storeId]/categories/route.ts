@@ -20,15 +20,15 @@ export async function POST(
     const body = await req.json();
 
     // Destructure fields out of body
-    const { name, billboardId } = body;
+    const { name, billboardId, isArchived } = body;
 
     // Check name field
-    if (!name){
+    if (!name) {
       return new NextResponse("Name is required", { status: 400 });
     }
 
     // Check billboardId field
-    if (!billboardId){
+    if (!billboardId) {
       return new NextResponse("Billboard ID is required", { status: 400 });
     }
 
@@ -56,13 +56,14 @@ export async function POST(
       data: {
         name,
         billboardId,
+        isArchived,
         storeId: params.storeId
       }
     });
 
     // Send back response with the category
     return NextResponse.json(category);
-  } catch (error){
+  } catch (error) {
     console.log('[CATEGORIES_POST]', error);
     return new NextResponse("Internal error", { status: 500 });
   }
@@ -87,7 +88,7 @@ export async function GET(
 
     // Send back response with all categories
     return NextResponse.json(categories);
-  } catch (error){
+  } catch (error) {
     console.log('[CATEGORIES_GET]', error);
     return new NextResponse("Internal error", { status: 500 });
   }

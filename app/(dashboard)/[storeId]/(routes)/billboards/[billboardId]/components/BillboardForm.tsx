@@ -108,9 +108,12 @@ const BillboardForm: React.FC<BillboardFormProps> = ({
       // Navigate back to the specific store's billboards page after deletion
       router.push(`${params.storeId}/billboards`);
       toast.success("Billboard deleted.");
-    } catch (error) {
-      // Safety mechanism will prompt a warning to delete any related records to the Billboard
-      toast.error("Make sure you removed all categories using this billboard first.");
+    } catch (error: any) {
+      if (error?.response?.data) {
+        toast.error(error.response.data);
+      } else {
+        toast.error("Make sure you removed all categories using this billboard first.");
+      }
     } finally {
       setLoading(false);
       // Close the Modal
@@ -167,7 +170,7 @@ const BillboardForm: React.FC<BillboardFormProps> = ({
               <FormItem>
                 <FormLabel>Background image</FormLabel>
                 <FormControl>
-                  <ImageUpload 
+                  <ImageUpload
                     value={field.value ? [field.value] : []}
                     disabled={loading}
                     onChange={(url) => field.onChange(url)}

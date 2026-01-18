@@ -155,9 +155,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
       // Navigate back to the specific store's products page after deletion
       router.push(`${params.storeId}/products`);
       toast.success("Product deleted.");
-    } catch (error) {
-      // Safety mechanism will prompt a warning to delete any related records to the product
-      toast.error("Something went wrong.");
+    } catch (error: any) {
+      if (error?.response?.data) {
+        toast.error(error.response.data);
+      } else {
+        toast.error("Something went wrong.");
+      }
     } finally {
       setLoading(false);
       // Close the Modal

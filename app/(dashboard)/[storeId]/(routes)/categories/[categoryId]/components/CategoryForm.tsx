@@ -23,6 +23,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,12 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 // Create zod object schema
 const formSchema = z.object({
   name: z.string().min(1),
   billboardId: z.string().min(1),
+  isArchived: z.boolean().default(false).optional(),
 });
 
 // extract the inferred type
@@ -76,7 +79,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       name: '',
-      billboardId: ''
+      billboardId: '',
+      isArchived: false,
     }
   });
 
@@ -117,9 +121,12 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       // Navigate back to the specific store's categories page after deletion
       router.push(`${params.storeId}/categories`);
       toast.success("Category deleted.");
-    } catch (error) {
-      // Safety mechanism will prompt a warning to delete any related records to the Category
-      toast.error("Make sure you removed all products using this category first.");
+    } catch (error: any) {
+      if (error?.response?.data) {
+        toast.error(error.response.data);
+      } else {
+        toast.error("Make sure you removed all products using this category first.");
+      }
     } finally {
       setLoading(false);
       // Close the Modal
@@ -174,19 +181,19 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Billboard ID</FormLabel>
-                  <Select 
-                    disabled={loading} 
-                    onValueChange={field.onChange} 
+                  <Select
+                    disabled={loading}
+                    onValueChange={field.onChange}
                     value={field.value}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
-                        defaultValue={field.value}
-                        placeholder="Select a billboard"
+                          defaultValue={field.value}
+                          placeholder="Select a billboard"
                         >
-                          
+
                         </SelectValue>
                       </SelectTrigger>
                     </FormControl>
@@ -202,6 +209,28 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isArchived"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl >
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Archived
+                    </FormLabel>
+                    <FormDescription>
+                      This category will not appear anywhere in the store
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
