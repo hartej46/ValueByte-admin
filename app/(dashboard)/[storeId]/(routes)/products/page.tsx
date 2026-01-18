@@ -9,15 +9,24 @@ import ProductClient from './components/client';
 import { ProductColumn } from './components/columns';
 
 const ProductsPage = async ({
-  params
+  params,
+  searchParams
 }: {
-  params: { storeId: string }
+  params: { storeId: string },
+  searchParams: {
+    categoryId?: string;
+    colorId?: string;
+    isArchived?: string;
+  }
 }) => {
 
-  // Fetch all products specific to the active store
+  // Fetch all products specific to the active store with filters applied
   const products = await prismadb.product.findMany({
     where: {
-      storeId: params.storeId
+      storeId: params.storeId,
+      categoryId: searchParams.categoryId,
+      colorId: searchParams.colorId,
+      isArchived: searchParams.isArchived === 'true' ? true : (searchParams.isArchived === 'false' ? false : undefined)
     },
     include: {
       category: true,
@@ -25,6 +34,18 @@ const ProductsPage = async ({
     },
     orderBy: {
       createdAt: 'desc'
+    }
+  });
+
+  const categories = await prismadb.category.findMany({
+    where: {
+      storeId: params.storeId,
+    }
+  });
+
+  const colors = await prismadb.color.findMany({
+    where: {
+      storeId: params.storeId,
     }
   });
 
@@ -43,7 +64,11 @@ const ProductsPage = async ({
   return (
     <div className='flex-col'>
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <ProductClient data={formattedProducts} />
+        <ProductClient
+          data={formattedProducts}
+          categories={categories}
+          colors={colors}
+        />
       </div>
     </div>
   );

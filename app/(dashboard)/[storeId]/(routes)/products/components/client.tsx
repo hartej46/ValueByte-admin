@@ -4,21 +4,27 @@
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
-// Local Imports
+import { Category, Color } from "@prisma/client";
+
 import { ProductColumn, columns } from "./columns";
 import { ApiList } from "@/components/ui/ApiList";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/ui/data-table";
+import { ProductFilters } from "./product-filters";
 
 interface ProductClientProps {
-  data: ProductColumn[]
+  data: ProductColumn[];
+  categories: Category[];
+  colors: Color[];
 }
 
 // Client component that loads all our products
 const ProductClient: React.FC<ProductClientProps> = ({
-  data
+  data,
+  categories,
+  colors
 }) => {
   // Create router object to perform client-side navigation
   const router = useRouter();
@@ -41,10 +47,12 @@ const ProductClient: React.FC<ProductClientProps> = ({
         </Button>
       </div>
       <Separator />
-      <DataTable columns={columns} data={data} searchKey={"name"}/>
+      <ProductFilters categories={categories} colors={colors} />
+      <Separator />
+      <DataTable columns={columns} data={data} searchKey={"name"} />
       <Heading title="API" description="API calls for Products" />
       <Separator />
-      <ApiList 
+      <ApiList
         entityName="products"
         entityIdName="productId"
       />
